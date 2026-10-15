@@ -1,4 +1,4 @@
-# Banking Transaction & Fraud Risk Analytics
+# Banking Fraud Investigation & Transaction Intelligence Platform
 
 An independent, reproducible portfolio project built with **synthetic banking data only**.
 
