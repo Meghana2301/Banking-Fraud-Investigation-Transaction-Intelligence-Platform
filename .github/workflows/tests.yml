@@ -37,6 +37,11 @@ jobs:
           python -m src.behavioral
           python -c "import sqlite3; c=sqlite3.connect('data/banking.db'); assert c.execute('SELECT COUNT(*) FROM behavioral_signals').fetchone()[0] == 5000; c.close()"
 
+      - name: Validate investigation prioritization
+        run: |
+          python -m src.investigation --capacity 5
+          python -c "from src.investigation import prioritize; q=prioritize(capacity=5); assert q['selected_count'] <= 5; assert q['candidate_count'] == q['selected_count'] + q['deferred_count']"
+
       - name: Run SQL reports, reconciliation and dashboard smoke test
         run: python -m scripts.ci_smoke
 
