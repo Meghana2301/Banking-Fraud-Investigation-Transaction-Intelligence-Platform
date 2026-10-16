@@ -27,6 +27,16 @@ jobs:
       - name: Generate 5000 synthetic transactions and load SQLite
         run: python -m src.pipeline --rows 5000 --seed 42
 
+      - name: Audit synthetic transaction data quality
+        run: |
+          python -m src.quality
+          python -c "from src.quality import audit_csv; assert audit_csv('data/transactions.csv')['valid']"
+
+      - name: Generate customer behavioral signals
+        run: |
+          python -m src.behavioral
+          python -c "import sqlite3; c=sqlite3.connect('data/banking.db'); assert c.execute('SELECT COUNT(*) FROM behavioral_signals').fetchone()[0] == 5000; c.close()"
+
       - name: Run SQL reports, reconciliation and dashboard smoke test
         run: python -m scripts.ci_smoke
 
