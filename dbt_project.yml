@@ -1,0 +1,11 @@
+name: 'banking_fraud'
+version: '1.0.0'
+config-version: 2
+profile: 'banking_fraud'
+model-paths: ['models']
+models:
+  banking_fraud:
+    staging:
+      +materialized: view
+    marts:
+      +materialized: view
