@@ -1,0 +1,19 @@
+version: 2
+sources:
+  - name: raw
+    database: BANKING_FRAUD_DB
+    schema: RAW
+    tables:
+      - name: transactions
+        identifier: TRANSACTIONS
+        columns:
+          - name: TRANSACTION_ID
+            data_tests:
+              - not_null
+              - unique
+          - name: TIMESTAMP
+            data_tests:
+              - not_null
+          - name: AMOUNT
+            data_tests:
+              - not_null
