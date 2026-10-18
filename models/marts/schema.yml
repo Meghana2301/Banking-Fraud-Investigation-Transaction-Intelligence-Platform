@@ -1,0 +1,59 @@
+
+version: 2
+
+models:
+  - name: mart_high_risk_transactions
+    description: "Flagged transactions categorized by risk level."
+    columns:
+      - name: TRANSACTION_ID
+        data_tests:
+          - not_null
+          - unique
+      - name: RISK_LEVEL
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['CRITICAL', 'HIGH', 'MEDIUM']
+
+  - name: mart_customer_risk_summary
+    description: "Customer-level transaction and risk metrics."
+    columns:
+      - name: CUSTOMER_ID
+        data_tests:
+          - not_null
+          - unique
+      - name: CUSTOMER_RISK_LEVEL
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
+
+  - name: mart_fraud_investigation_queue
+    description: "Prioritized queue of flagged transactions."
+    columns:
+      - name: TRANSACTION_ID
+        data_tests:
+          - not_null
+          - unique
+      - name: INVESTIGATION_PRIORITY
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values:
+                  - 'P1 - URGENT'
+                  - 'P2 - HIGH'
+                  - 'P3 - REVIEW'
+
+  - name: mart_daily_transaction_intelligence
+    description: "Daily transaction activity and fraud-risk metrics."
+    columns:
+      - name: TRANSACTION_DATE
+        data_tests:
+          - not_null
+          - unique
+      - name: TOTAL_TRANSACTIONS
+        data_tests:
+          - not_null

@@ -4,3 +4,13 @@ __pycache__/
 data/*.csv
 data/*.db
 .pytest_cache/
+
+# dbt generated files
+target/
+logs/
+
+# Local credentials and environment variables
+.env
+.env.*
+profiles.yml
+

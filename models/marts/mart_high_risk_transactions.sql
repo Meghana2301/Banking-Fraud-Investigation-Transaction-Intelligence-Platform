@@ -1,0 +1,23 @@
+
+{{ config(materialized='view', schema='MARTS') }}
+
+SELECT
+    TRANSACTION_ID,
+    CUSTOMER_ID,
+    ACCOUNT_ID,
+    TRANSACTION_TIMESTAMP,
+    TRANSACTION_DATE,
+    AMOUNT,
+    MERCHANT_CATEGORY,
+    COUNTRY,
+    CHANNEL,
+    IS_FRAUD,
+    RISK_SCORE,
+    FLAGGED,
+    CASE
+        WHEN RISK_SCORE >= 80 THEN 'CRITICAL'
+        WHEN RISK_SCORE >= 65 THEN 'HIGH'
+        ELSE 'MEDIUM'
+    END AS RISK_LEVEL
+FROM {{ ref('stg_transactions') }}
+WHERE FLAGGED = 1
