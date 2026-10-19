@@ -4,6 +4,10 @@ import streamlit as st
 import altair as alt
 
 from snowflake_connection import get_snowflake_connection
+import os
+from pathlib import Path
+
+DEMO_MODE = os.getenv("DEMO_MODE", "false").lower() == "true"
 
 
 # ============================================================
@@ -129,6 +133,28 @@ RISK_COLORS = [RED, AMBER, BLUE, TEAL]
 
 
 # ============================================================
+# PUBLIC DEMO DATA ACCESS
+# ============================================================
+
+@st.cache_data(show_spinner=False)
+def load_demo_data():
+    data_dir = Path(__file__).resolve().parent / "demo_data"
+
+    daily = pd.read_csv(
+        data_dir / "daily_transaction_intelligence.csv"
+    )
+
+    customers = pd.read_csv(
+        data_dir / "customer_risk_summary.csv"
+    )
+
+    investigations = pd.read_csv(
+        data_dir / "fraud_investigation_queue.csv"
+    )
+
+    return daily, customers, investigations
+
+# ============================================================
 # 4. SNOWFLAKE DATA ACCESS
 # ============================================================
 
@@ -236,13 +262,17 @@ st.markdown(
 # ============================================================
 
 try:
-    with st.spinner("Loading intelligence from Snowflake..."):
-        daily_df, customers_df, queue_df = load_dashboard_data()
+    if DEMO_MODE:
+        with st.spinner("Loading synthetic demo data..."):
+            daily_df, customers_df, queue_df = load_demo_data()
+    else:
+        with st.spinner("Loading intelligence from Snowflake..."):
+            daily_df, customers_df, queue_df = load_dashboard_data()
 
 except Exception:
     st.error(
-        "Unable to retrieve data from Snowflake. "
-        "Check your database connection and permissions."
+        "Unable to load dashboard data. "
+        "Check your data source configuration."
     )
     st.stop()
 
@@ -352,16 +382,20 @@ with st.sidebar:
     st.divider()
 
     if st.button(
-        "🔄 Refresh Snowflake Data",
+        "🔄 Refresh Demo Data" if DEMO_MODE else "🔄 Refresh Snowflake Data",
         use_container_width=True,
     ):
         st.cache_data.clear()
         st.rerun()
 
     st.caption(
-        "Source: Snowflake | Transformation: dbt | "
-        "Application: Streamlit"
+    (
+        "Source: Synthetic CSV Snapshot (Snowflake/dbt Output)"
+        if DEMO_MODE
+        else "Source: Snowflake | Transformation: dbt"
     )
+    + " | Application: Streamlit"
+)
 
 
 # ============================================================

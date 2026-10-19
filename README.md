@@ -120,6 +120,25 @@ Key capabilities include:
 - Interactive filters and charts
 - CSV export for investigation results
 
+
+### Streamlit Dashboard Screenshots
+
+#### 1. Fraud Monitoring Overview
+![Fraud Monitoring Overview](screenshots/streamlit/streamlit_fraud_overview.png)
+
+#### 2. Investigation Priority
+![Investigation Priority](screenshots/streamlit/streamlit_investigation_priority.png)
+
+#### 3. Daily Transaction Intelligence
+![Daily Transaction Intelligence](screenshots/streamlit/streamlit_daily_transaction_intelligence.png)
+
+#### 4. Customer Risk Intelligence
+![Customer Risk Intelligence](screenshots/streamlit/streamlit_customer_risk_intelligence.png)
+
+#### 5. Fraud Investigation Queue
+![Fraud Investigation Queue](screenshots/streamlit/streamlit_fraud_investigation_queue.png)
+
+
 ## Power BI Dashboard
 
 The Power BI report provides three analytical pages.
