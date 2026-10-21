@@ -16,6 +16,18 @@ It is designed to support three analytical questions:
 
 **Important:** A flagged transaction indicates that additional review may be needed. It does not establish confirmed fraud.
 
+## 🌐 Live Interactive Dashboard
+
+🚀 **[Launch the Banking Fraud Intelligence Dashboard](https://banking-fraud-intelligence.streamlit.app/)**
+
+Explore fraud monitoring KPIs, investigation priorities,
+transaction trends, customer risk intelligence, and
+the interactive investigation queue.
+
+**Demo Mode:** Uses synthetic CSV snapshots generated
+from the Snowflake and dbt pipeline. No Snowflake
+credentials are required.
+
 ## Architecture
 
 ```text
@@ -109,7 +121,7 @@ The project includes data quality and reconciliation tests for the analytical ma
 
 ## Streamlit Dashboard
 
-The Streamlit application connects to Snowflake analytical marts and provides interactive fraud analysis.
+The Streamlit application provides interactive fraud analysis using synthetic CSV snapshots in public demo mode. It also supports Snowflake-backed analytics when configured locally with valid credentials.
 
 Key capabilities include:
 
@@ -186,7 +198,7 @@ python -m unittest discover -s tests -v
 ### 4. Launch the local Streamlit dashboard
 
 ```bash
-streamlit run dashboard/app.py
+streamlit run app.py
 ```
 
 The Snowflake-backed dashboard requires valid Snowflake credentials and access to the analytical marts. Credentials must be supplied securely through environment configuration and must never be committed to GitHub.
