@@ -7,7 +7,7 @@ from snowflake_connection import get_snowflake_connection
 import os
 from pathlib import Path
 
-DEMO_MODE = os.getenv("DEMO_MODE", "false").lower() == "true"
+DEMO_MODE = os.getenv("DEMO_MODE", "true").lower() == "true"
 
 
 # ============================================================
