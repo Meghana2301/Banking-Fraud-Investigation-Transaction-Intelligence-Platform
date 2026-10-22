@@ -14,3 +14,6 @@ logs/
 .env.*
 profiles.yml
 
+
+# Local external datasets (do not commit)
+data/external/
