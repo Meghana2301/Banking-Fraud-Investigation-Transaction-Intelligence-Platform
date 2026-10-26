@@ -1,3 +1,4 @@
+from contextlib import closing
 import csv
 import json
 import sqlite3
@@ -38,7 +39,7 @@ class AdvancedInvestigationTests(unittest.TestCase):
             raw = generate(5, 11, root / "seed.csv")
             load(raw, db)
             analyze(db)
-            with sqlite3.connect(db) as conn:
+            with closing(sqlite3.connect(db)) as conn:
                 first = conn.execute("SELECT MIN(timestamp) FROM transactions").fetchone()[0]
                 customer = conn.execute("SELECT customer_id FROM transactions LIMIT 1").fetchone()[0]
             late = root / "late.csv"
@@ -49,7 +50,7 @@ class AdvancedInvestigationTests(unittest.TestCase):
                                  50, "fuel", "US", "online", 0])
             result = ingest_late(late, db)
             self.assertEqual(result["recomputed"], 6)
-            with sqlite3.connect(db) as conn:
+            with closing(sqlite3.connect(db)) as conn:
                 self.assertEqual(conn.execute(
                     "SELECT prior_transaction_count FROM behavioral_signals WHERE transaction_id=999"
                 ).fetchone()[0], 0)

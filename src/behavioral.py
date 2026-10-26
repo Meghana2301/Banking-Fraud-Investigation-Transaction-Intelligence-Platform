@@ -12,6 +12,7 @@ from pathlib import Path
 from statistics import median
 
 from src.pipeline import ROOT
+from contextlib import closing
 
 
 def score_behavior(rows, min_history=5, burst_count=3, burst_minutes=10, spike_multiplier=4):
@@ -53,27 +54,28 @@ def score_behavior(rows, min_history=5, burst_count=3, burst_minutes=10, spike_m
 
 def analyze(db_path=None):
     db_path = Path(db_path or ROOT / "data" / "banking.db")
-    with sqlite3.connect(db_path) as conn:
-        conn.row_factory = sqlite3.Row
-        rows = [dict(row) for row in conn.execute(
-            "SELECT transaction_id, customer_id, timestamp, amount FROM transactions"
-        )]
-        signals = score_behavior(rows)
-        conn.execute("""CREATE TABLE IF NOT EXISTS behavioral_signals (
-            transaction_id INTEGER PRIMARY KEY,
-            customer_id TEXT NOT NULL,
-            prior_transaction_count INTEGER NOT NULL,
-            prior_median_amount REAL,
-            spending_spike INTEGER NOT NULL,
-            rapid_burst INTEGER NOT NULL,
-            behavioral_flag INTEGER NOT NULL,
-            FOREIGN KEY(transaction_id) REFERENCES transactions(transaction_id)
-        )""")
-        conn.execute("DELETE FROM behavioral_signals")
-        conn.executemany("""INSERT INTO behavioral_signals VALUES (
-            :transaction_id, :customer_id, :prior_transaction_count,
-            :prior_median_amount, :spending_spike, :rapid_burst, :behavioral_flag
-        )""", signals)
+    with closing(sqlite3.connect(db_path)) as conn:
+        with conn:
+            conn.row_factory = sqlite3.Row
+            rows = [dict(row) for row in conn.execute(
+                "SELECT transaction_id, customer_id, timestamp, amount FROM transactions"
+            )]
+            signals = score_behavior(rows)
+            conn.execute("""CREATE TABLE IF NOT EXISTS behavioral_signals (
+                transaction_id INTEGER PRIMARY KEY,
+                customer_id TEXT NOT NULL,
+                prior_transaction_count INTEGER NOT NULL,
+                prior_median_amount REAL,
+                spending_spike INTEGER NOT NULL,
+                rapid_burst INTEGER NOT NULL,
+                behavioral_flag INTEGER NOT NULL,
+                FOREIGN KEY(transaction_id) REFERENCES transactions(transaction_id)
+            )""")
+            conn.execute("DELETE FROM behavioral_signals")
+            conn.executemany("""INSERT INTO behavioral_signals VALUES (
+                :transaction_id, :customer_id, :prior_transaction_count,
+                :prior_median_amount, :spending_spike, :rapid_burst, :behavioral_flag
+            )""", signals)
     return {"analyzed": len(signals), "behavioral_flags": sum(x["behavioral_flag"] for x in signals),
             "spikes": sum(x["spending_spike"] for x in signals),
             "bursts": sum(x["rapid_burst"] for x in signals)}

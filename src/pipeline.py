@@ -5,6 +5,7 @@ import random
 import sqlite3
 from datetime import datetime, timedelta
 from pathlib import Path
+from contextlib import closing
 
 ROOT = Path(__file__).resolve().parents[1]
 CATEGORIES = ['groceries', 'travel', 'fuel', 'electronics', 'restaurants', 'utilities']
@@ -45,40 +46,42 @@ def load(csv_path=None, db_path=None):
     csv_path = Path(csv_path or ROOT / 'data' / 'transactions.csv')
     db_path = Path(db_path or ROOT / 'data' / 'banking.db')
     db_path.parent.mkdir(parents=True, exist_ok=True)
-    with sqlite3.connect(db_path) as conn:
-        conn.executescript("""CREATE TABLE IF NOT EXISTS transactions (
-            transaction_id INTEGER PRIMARY KEY, customer_id INTEGER NOT NULL, account_id TEXT NOT NULL,
-            timestamp TEXT NOT NULL, amount REAL NOT NULL CHECK(amount >= 0),
-            merchant_category TEXT NOT NULL, country TEXT NOT NULL, channel TEXT NOT NULL,
-            is_fraud INTEGER NOT NULL CHECK(is_fraud IN (0,1)), risk_score INTEGER NOT NULL,
-            flagged INTEGER NOT NULL CHECK(flagged IN (0,1)));
-            CREATE INDEX IF NOT EXISTS idx_txn_timestamp ON transactions(timestamp);
-            CREATE INDEX IF NOT EXISTS idx_txn_customer ON transactions(customer_id);""")
-        with csv_path.open(newline='', encoding='utf-8') as f:
-            rows = []
-            seen = set()
-            for row in csv.DictReader(f):
-                tid = int(row['transaction_id'])
-                if tid in seen:
-                    raise ValueError(f'duplicate transaction_id: {tid}')
-                seen.add(tid)
-                amount = float(row['amount'])
-                if amount < 0:
-                    raise ValueError('negative transaction amount')
-                score = risk_score(amount, row['country'], row['channel'])
-                rows.append((tid, int(row['customer_id']), row['account_id'], row['timestamp'], amount,
-                             row['merchant_category'], row['country'], row['channel'], int(row['is_fraud']),
-                             score, int(score >= 65)))
-        conn.executemany('INSERT OR REPLACE INTO transactions VALUES (?,?,?,?,?,?,?,?,?,?,?)', rows)
-        return len(rows)
+    with closing(sqlite3.connect(db_path)) as conn:
+        with conn:
+            conn.executescript("""CREATE TABLE IF NOT EXISTS transactions (
+                transaction_id INTEGER PRIMARY KEY, customer_id INTEGER NOT NULL, account_id TEXT NOT NULL,
+                timestamp TEXT NOT NULL, amount REAL NOT NULL CHECK(amount >= 0),
+                merchant_category TEXT NOT NULL, country TEXT NOT NULL, channel TEXT NOT NULL,
+                is_fraud INTEGER NOT NULL CHECK(is_fraud IN (0,1)), risk_score INTEGER NOT NULL,
+                flagged INTEGER NOT NULL CHECK(flagged IN (0,1)));
+                CREATE INDEX IF NOT EXISTS idx_txn_timestamp ON transactions(timestamp);
+                CREATE INDEX IF NOT EXISTS idx_txn_customer ON transactions(customer_id);""")
+            with csv_path.open(newline='', encoding='utf-8') as f:
+                rows = []
+                seen = set()
+                for row in csv.DictReader(f):
+                    tid = int(row['transaction_id'])
+                    if tid in seen:
+                        raise ValueError(f'duplicate transaction_id: {tid}')
+                    seen.add(tid)
+                    amount = float(row['amount'])
+                    if amount < 0:
+                        raise ValueError('negative transaction amount')
+                    score = risk_score(amount, row['country'], row['channel'])
+                    rows.append((tid, int(row['customer_id']), row['account_id'], row['timestamp'], amount,
+                                 row['merchant_category'], row['country'], row['channel'], int(row['is_fraud']),
+                                 score, int(score >= 65)))
+            conn.executemany('INSERT OR REPLACE INTO transactions VALUES (?,?,?,?,?,?,?,?,?,?,?)', rows)
+            return len(rows)
 
 
 def report(db_path=None):
     db_path = Path(db_path or ROOT / 'data' / 'banking.db')
-    with sqlite3.connect(db_path) as conn:
-        count, total, flagged, fraud = conn.execute("""SELECT COUNT(*), ROUND(SUM(amount),2),
-             SUM(flagged), SUM(is_fraud) FROM transactions""").fetchone()
-        return {'transactions': count, 'total_amount': total, 'flagged': flagged, 'synthetic_fraud_labels': fraud}
+    with closing(sqlite3.connect(db_path)) as conn:
+        with conn:
+            count, total, flagged, fraud = conn.execute("""SELECT COUNT(*), ROUND(SUM(amount),2),
+                 SUM(flagged), SUM(is_fraud) FROM transactions""").fetchone()
+            return {'transactions': count, 'total_amount': total, 'flagged': flagged, 'synthetic_fraud_labels': fraud}
 
 
 def main():

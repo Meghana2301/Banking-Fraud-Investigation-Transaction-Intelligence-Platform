@@ -1,3 +1,4 @@
+from contextlib import closing
 import sqlite3
 import tempfile
 import unittest
@@ -20,7 +21,7 @@ class PipelineTests(unittest.TestCase):
             stats = report(db_path)
             self.assertEqual(stats['transactions'], 120)
             self.assertGreater(stats['total_amount'], 0)
-            with sqlite3.connect(db_path) as conn:
+            with closing(sqlite3.connect(db_path)) as conn:
                 self.assertEqual(conn.execute('SELECT COUNT(*) FROM transactions WHERE risk_score < 0 OR risk_score > 100').fetchone()[0], 0)
 
     def test_negative_amount_rejected(self):

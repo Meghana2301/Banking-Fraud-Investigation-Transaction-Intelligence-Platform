@@ -8,6 +8,7 @@ import json
 import sqlite3
 from pathlib import Path
 from src.pipeline import ROOT
+from contextlib import closing
 
 
 def metrics(rows, threshold=65):
@@ -43,8 +44,9 @@ def metrics(rows, threshold=65):
 
 def evaluate(db_path=None, thresholds=(30, 50, 65, 80)):
     path = Path(db_path or ROOT / "data" / "banking.db")
-    with sqlite3.connect(path) as conn:
-        rows = conn.execute("SELECT risk_score, is_fraud, amount FROM transactions").fetchall()
+    with closing(sqlite3.connect(path)) as conn:
+        with conn:
+            rows = conn.execute("SELECT risk_score, is_fraud, amount FROM transactions").fetchall()
     return [metrics(rows, threshold) for threshold in thresholds]
 
 

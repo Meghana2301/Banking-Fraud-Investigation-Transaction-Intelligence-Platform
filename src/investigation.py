@@ -3,20 +3,22 @@ import json
 import sqlite3
 from pathlib import Path
 from src.pipeline import ROOT
+from contextlib import closing
 
 
 def prioritize(db_path=None, capacity=50):
     if capacity < 0:
         raise ValueError("capacity must not be negative")
     db_path = Path(db_path or ROOT / "data" / "banking.db")
-    with sqlite3.connect(db_path) as conn:
-        conn.row_factory = sqlite3.Row
-        records = conn.execute("""SELECT t.transaction_id, t.customer_id, t.timestamp,
-            t.amount, t.risk_score, t.flagged, t.country, t.channel,
-            COALESCE(b.spending_spike, 0) AS spending_spike,
-            COALESCE(b.rapid_burst, 0) AS rapid_burst
-            FROM transactions t LEFT JOIN behavioral_signals b
-            ON t.transaction_id = b.transaction_id""").fetchall()
+    with closing(sqlite3.connect(db_path)) as conn:
+        with conn:
+            conn.row_factory = sqlite3.Row
+            records = conn.execute("""SELECT t.transaction_id, t.customer_id, t.timestamp,
+                t.amount, t.risk_score, t.flagged, t.country, t.channel,
+                COALESCE(b.spending_spike, 0) AS spending_spike,
+                COALESCE(b.rapid_burst, 0) AS rapid_burst
+                FROM transactions t LEFT JOIN behavioral_signals b
+                ON t.transaction_id = b.transaction_id""").fetchall()
     queue = []
     for row in records:
         reasons = []
